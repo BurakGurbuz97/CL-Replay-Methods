@@ -3,9 +3,9 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from utils.buffer import Buffer
+from buffer import Buffer
 from torch.nn import functional as F
-from utils.args import *
+from args import *
 from models.utils.continual_model import ContinualModel
 
 def get_parser() -> ArgumentParser:

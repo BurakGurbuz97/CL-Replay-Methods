@@ -22,6 +22,9 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     parser.add_argument('--lr', type=float, required=True,
                         help='Learning rate.')
 
+    parser.add_argument('--optim', type=str, required=True, choices= ["adam", "sgd"],
+                        help='Optimizer Type') 
+
     parser.add_argument('--optim_wd', type=float, default=0.,
                         help='optimizer weight decay.')
     parser.add_argument('--optim_mom', type=float, default=0.,

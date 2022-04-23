@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch.nn as nn
-from torch.optim import SGD
+from torch.optim import Adam, SGD
 import torch
 import torchvision
 from argparse import Namespace
@@ -26,7 +26,10 @@ class ContinualModel(nn.Module):
         self.loss = loss
         self.args = args
         self.transform = transform
-        self.opt = SGD(self.net.parameters(), lr=self.args.lr)
+        if args.optim == "sgd":
+            self.opt = SGD(self.net.parameters(), lr=self.args.lr)
+        else:
+            self.opt = Adam(self.net.parameters(), lr=self.args.lr)
         self.device = get_device()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

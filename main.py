@@ -36,44 +36,17 @@ def lecun_fix():
 
 def parse_args():
     parser = ArgumentParser(description='mammoth', allow_abbrev=False)
-    parser.add_argument('--model', type=str, required=True,
+    parser.add_argument('--model', type=str, default="der",
                         help='Model name.', choices=get_all_models())
-    parser.add_argument('--load_best_args', action='store_true',
-                        help='Loads the best arguments for each method, '
-                             'dataset and memory buffer.')
-    torch.set_num_threads(4)
+
+ 
     add_management_args(parser)
     args = parser.parse_known_args()[0]
     mod = importlib.import_module('models.' + args.model)
 
-    if args.load_best_args:
-        parser.add_argument('--dataset', type=str, required=True,
-                            choices=DATASET_NAMES,
-                            help='Which dataset to perform experiments on.')
-        if hasattr(mod, 'Buffer'):
-            parser.add_argument('--buffer_size', type=int, required=True,
-                                help='The size of the memory buffer.')
-        args = parser.parse_args()
-        if args.model == 'joint':
-            best = best_args[args.dataset]['sgd']
-        else:
-            best = best_args[args.dataset][args.model]
-        if hasattr(mod, 'Buffer'):
-            best = best[args.buffer_size]
-        else:
-            best = best[-1]
-        get_parser = getattr(mod, 'get_parser')
-        parser = get_parser()
-        to_parse = sys.argv[1:] + ['--' + k + '=' + str(v) for k, v in best.items()]
-        to_parse.remove('--load_best_args')
-        args = parser.parse_args(to_parse)
-        if args.model == 'joint' and args.dataset == 'mnist-360':
-            args.model = 'joint_gcl'        
-    else:
-        get_parser = getattr(mod, 'get_parser')
-        parser = get_parser()
-        args = parser.parse_args()
-
+    get_parser = getattr(mod, 'get_parser')
+    parser = get_parser()
+    args = parser.parse_args()
     if args.seed is not None:
         set_random_seed(args.seed)
 
@@ -84,6 +57,7 @@ def main(args=None):
     if args is None:
         args = parse_args()    
     
+    print(args)
     dataset = get_dataset(args)
 
     if args.n_epochs is None and isinstance(dataset, ContinualDataset):
