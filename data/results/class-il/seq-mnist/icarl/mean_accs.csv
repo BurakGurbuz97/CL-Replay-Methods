@@ -1,2 +1,0 @@
-task1,task2,task3,task4,task5,forward_transfer,backward_transfer,forgetting,seed,non_verbose,lr,optim_wd,optim_mom,optim_nesterov,n_epochs,batch_size,buffer_size,minibatch_size
-99.90543735224587,91.66557840896724,82.09450840166996,76.46437958693394,69.93209010108444,,-11.765300125319479,11.765300125319479,0,True,0.01,0.0,0.0,0,10,128,1000,128
