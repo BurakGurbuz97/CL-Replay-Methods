@@ -13,15 +13,15 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     Adds the arguments used by all the models.
     :param parser: the parser instance
     """
-    parser.add_argument('--dataset', type=str, default="seq-mnist",
+    parser.add_argument('--dataset', type=str, default="seq-efmnist",
                         choices=DATASET_NAMES,
                         help='Which dataset to perform experiments on.')
 
-    parser.add_argument('--model', type=str, default="er",
+    parser.add_argument('--model', type=str, default="agem",
                         help='Model name.', choices=get_all_models())
 
     
-    parser.add_argument('--optim', type=str, default="sgd", choices= ["adam", "sgd"],
+    parser.add_argument('--optim', type=str, default="adam", choices= ["adam", "sgd"],
                         help='Optimizer Type') 
 
     parser.add_argument('--lr', type=float, default=0.01,
@@ -36,7 +36,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
 
     parser.add_argument('--n_epochs', type=int, default=10,
                         help='Batch size.')
-    parser.add_argument('--batch_size', type=int, default=256,
+    parser.add_argument('--batch_size', type=int, default=128,
                         help='Batch size.')
 
 def add_management_args(parser: ArgumentParser) -> None:
@@ -62,7 +62,7 @@ def add_rehearsal_args(parser: ArgumentParser) -> None:
     Adds the arguments used by all the rehearsal-based methods
     :param parser: the parser instance
     """
-    parser.add_argument('--buffer_size', type=int,  default=1000,
+    parser.add_argument('--buffer_size', type=int,  default=5700,
                         help='The size of the memory buffer.')
     parser.add_argument('--minibatch_size', type=int, default=128,
                         help='The batch size of the memory buffer.')

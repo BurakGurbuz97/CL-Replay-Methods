@@ -39,7 +39,7 @@ def lecun_fix():
 
 def parse_args():
     parser = ArgumentParser(description='mammoth', allow_abbrev=False)
-    parser.add_argument('--model', type=str, default="er",
+    parser.add_argument('--model', type=str, default="agem",
                         help='Model name.', choices=get_all_models())
 
  

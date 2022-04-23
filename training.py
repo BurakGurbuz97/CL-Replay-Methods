@@ -38,9 +38,17 @@ def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> No
     :param dataset: the continual dataset
     :param k: the task index
     """
-    outputs[:, 0:k * dataset.N_CLASSES_PER_TASK] = -float('inf')
-    outputs[:, (k + 1) * dataset.N_CLASSES_PER_TASK:
+    try:
+        outputs[:, 0:k * dataset.N_CLASSES_PER_TASK] = -float('inf')
+        outputs[:, (k + 1) * dataset.N_CLASSES_PER_TASK:
                dataset.N_TASKS * dataset.N_CLASSES_PER_TASK] = -float('inf')
+    except:
+        T =  dataset.T
+        task_classes = [list(range(sum(T[:i]),  sum(T[:i+1]))) for i in range(len(T))]
+        temp = copy.deepcopy(outputs)
+        outputs[:, :] = -float('inf')
+        outputs[:, task_classes[k]] = temp[:, task_classes[k]]
+
 
 
 def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tuple[list, list]:
@@ -60,7 +68,10 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tu
         correct, correct_mask_classes, total = 0.0, 0.0, 0.0
         for data in test_loader:
             with torch.no_grad():
-                inputs, labels = data
+                if len(data) == 3:
+                    inputs, labels, _ = data
+                else:
+                    inputs, labels = data
                 inputs, labels = inputs.to(model.device), labels.to(model.device)
                 outputs = model(inputs)
                 _, pred = torch.max(outputs.data, 1)
@@ -113,9 +124,14 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     logits = logits.to(model.device)
                     loss = model.observe(inputs, labels, not_aug_inputs, logits)
                 else:
-                    inputs, labels, not_aug_inputs = data
-                    inputs, labels = inputs.to(model.device), labels.to(
-                        model.device)
+                    #We do not perform any augmentation of seq-efmnist
+                    if args.dataset == "seq-efmnist":
+                        inputs, labels, _ = data
+                        not_aug_inputs = copy.deepcopy(inputs)
+                    else:
+                        inputs, labels, not_aug_inputs = data
+                        
+                    inputs, labels = inputs.to(model.device), labels.to(model.device)
                     not_aug_inputs = not_aug_inputs.to(model.device)
                     loss = model.observe(inputs, labels, not_aug_inputs)
 
