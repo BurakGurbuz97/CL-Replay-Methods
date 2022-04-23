@@ -6,7 +6,7 @@ checkpoints/
 *.png
 *.pt
 *.pkl
-*.sh
+
 *.txt
 json/
 out/
