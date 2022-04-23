@@ -13,6 +13,21 @@ from datasets.utils.continual_dataset import ContinualDataset
 from typing import Tuple
 from datasets import get_dataset
 import sys
+import copy
+
+
+# Calculate the sparsity of the model
+def compute_weight_sparsity(model):
+    parameters = 0
+    ones = 0
+    for module in model.modules():
+        if isinstance(module, torch.nn.Linear) or isinstance(module, torch.nn.Conv2d):
+            shape = module.weight.data.shape
+            parameters += torch.prod(torch.tensor(shape))
+            w_mask, _ = copy.deepcopy(module.get_mask())
+            ones += torch.count_nonzero(w_mask)
+    return float((parameters - ones) / parameters) * 100
+
 
 def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> None:
     """
@@ -80,6 +95,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     print(file=sys.stderr)
     for t in range(dataset.N_TASKS):
         model.net.train()
+        print('Model sparsity before training:', compute_weight_sparsity(model.net))
         train_loader, _ = dataset.get_data_loaders()
         if hasattr(model, 'begin_task'):
             model.begin_task(dataset)

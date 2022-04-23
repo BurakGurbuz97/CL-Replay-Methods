@@ -36,10 +36,13 @@ def add_experiment_args(parser: ArgumentParser) -> None:
 
     parser.add_argument('--n_epochs', type=int, default=10,
                         help='Batch size.')
-    parser.add_argument('--batch_size', type=int, default=128,
+    parser.add_argument('--batch_size', type=int, default=256,
                         help='Batch size.')
 
 def add_management_args(parser: ArgumentParser) -> None:
+    #0.1 is effectively dense model
+    parser.add_argument('--prune_perc', type=float, default=0.1,
+                        help='Pruning percentage')
     parser.add_argument('--seed', type=int, default=0,
                         help='The random seed.')
     parser.add_argument('--notes', type=str, default=None,

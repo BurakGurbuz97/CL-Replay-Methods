@@ -27,6 +27,9 @@ from conf import set_random_seed
 import torch
 
 
+
+
+
 def lecun_fix():
     # Yann moved his website to CloudFlare. You need this now
     from six.moves import urllib
@@ -36,7 +39,7 @@ def lecun_fix():
 
 def parse_args():
     parser = ArgumentParser(description='mammoth', allow_abbrev=False)
-    parser.add_argument('--model', type=str, default="der",
+    parser.add_argument('--model', type=str, default="er",
                         help='Model name.', choices=get_all_models())
 
  
@@ -69,7 +72,7 @@ def main(args=None):
 
     backbone = dataset.get_backbone()
     loss = dataset.get_loss()
-    model = get_model(args, backbone, loss, dataset.get_transform())  
+    model = get_model(args, backbone, loss, dataset.get_transform()) 
 
     if isinstance(dataset, ContinualDataset):
         train(model, dataset, args)
