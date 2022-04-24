@@ -117,12 +117,17 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         for epoch in range(model.args.n_epochs):
             for i, data in enumerate(train_loader):
                 if hasattr(dataset.train_loader.dataset, 'logits'):
-                    inputs, labels, not_aug_inputs, logits = data
+                     #We do not perform any augmentation of seq-efmnist
+                    if args.dataset == "seq-efmnist":
+                        inputs, labels, _ = data
+                        not_aug_inputs = copy.deepcopy(inputs)
+                    else:
+                        inputs, labels, not_aug_inputs, _ = data
                     inputs = inputs.to(model.device)
                     labels = labels.to(model.device)
                     not_aug_inputs = not_aug_inputs.to(model.device)
-                    logits = logits.to(model.device)
-                    loss = model.observe(inputs, labels, not_aug_inputs, logits)
+                    #logits = logits.to(model.device)
+                    loss = model.observe(inputs, labels, not_aug_inputs, logits = None)
                 else:
                     #We do not perform any augmentation of seq-efmnist
                     if args.dataset == "seq-efmnist":

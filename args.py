@@ -17,7 +17,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
                         choices=DATASET_NAMES,
                         help='Which dataset to perform experiments on.')
 
-    parser.add_argument('--model', type=str, default="agem",
+    parser.add_argument('--model', type=str, default="icarl",
                         help='Model name.', choices=get_all_models())
 
     
@@ -41,7 +41,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
 
 def add_management_args(parser: ArgumentParser) -> None:
     #0.1 is effectively dense model
-    parser.add_argument('--prune_perc', type=float, default=0.1,
+    parser.add_argument('--prune_perc', type=float, default=0.01,
                         help='Pruning percentage')
     parser.add_argument('--seed', type=int, default=0,
                         help='The random seed.')

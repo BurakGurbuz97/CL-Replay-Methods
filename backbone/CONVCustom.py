@@ -84,7 +84,6 @@ class Conv(MammothBackbone):
         :param x: input tensor (batch_size, input_size)
         :return: output tensor (output_size)
         """
-        x = x.view(-1, num_flat_features(x))
 
         feats = self._features(x)
         

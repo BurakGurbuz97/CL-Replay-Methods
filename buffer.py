@@ -20,44 +20,56 @@ def icarl_replay(self, dataset, val_set_split=0):
     """
         
     if self.task > 0:
-        buff_val_mask = torch.rand(len(self.buffer)) < val_set_split
-        val_train_mask = torch.zeros(len(dataset.train_loader.dataset.data)).bool()
-        val_train_mask[torch.randperm(len(dataset.train_loader.dataset.data))[:buff_val_mask.sum()]] = True
-
-        if val_set_split > 0:
-            self.val_loader = deepcopy(dataset.train_loader)
-        
-        data_concatenate = torch.cat if type(dataset.train_loader.dataset.data) == torch.Tensor else np.concatenate
-        need_aug = hasattr(dataset.train_loader.dataset, 'not_aug_transform')
-        if not need_aug:
+        #EF-MNIST dataset no val split
+        if hasattr(dataset, "T"):
+            buff_val_mask = torch.rand(len(self.buffer)) < val_set_split
+            val_train_mask = torch.zeros(dataset.train_loader.dataset.get_raw_samples()[0].shape[0]).bool()
+            val_train_mask[torch.randperm(dataset.train_loader.dataset.get_raw_samples()[0].shape[0])[:buff_val_mask.sum()]] = True
+            
             refold_transform = lambda x: x.cpu()
-        else:    
-            data_shape = len(dataset.train_loader.dataset.data[0].shape)
-            if data_shape == 3:
-                refold_transform = lambda x: (x.cpu()*255).permute([0, 2, 3, 1]).numpy().astype(np.uint8)
-            elif data_shape == 2:
-                refold_transform = lambda x: (x.cpu()*255).squeeze(1).type(torch.uint8)
+            buffer_targets = self.buffer.labels.cpu().numpy()[:len(self.buffer)][~buff_val_mask]
+            buffer_samples = refold_transform((self.buffer.examples)[:len(self.buffer)][~buff_val_mask])
+            dataset.train_loader.dataset.add_samples(buffer_samples.cpu().numpy().squeeze(), buffer_targets, np.array([self.task] * len(buffer_samples)))
 
-        # REDUCE AND MERGE TRAINING SET
-        dataset.train_loader.dataset.targets = np.concatenate([
-            dataset.train_loader.dataset.targets[~val_train_mask],
-            self.buffer.labels.cpu().numpy()[:len(self.buffer)][~buff_val_mask]
-            ])
-        dataset.train_loader.dataset.data = data_concatenate([
-            dataset.train_loader.dataset.data[~val_train_mask],
-            refold_transform((self.buffer.examples)[:len(self.buffer)][~buff_val_mask])
-            ])
+        else:
+            buff_val_mask = torch.rand(len(self.buffer)) < val_set_split
+            val_train_mask = torch.zeros(len(dataset.train_loader.dataset.data)).bool()
+            val_train_mask[torch.randperm(len(dataset.train_loader.dataset.data))[:buff_val_mask.sum()]] = True
 
-        if val_set_split > 0:
-            # REDUCE AND MERGE VALIDATION SET
-            self.val_loader.dataset.targets = np.concatenate([
-                self.val_loader.dataset.targets[val_train_mask],
-                self.buffer.labels.cpu().numpy()[:len(self.buffer)][buff_val_mask]
+            if val_set_split > 0:
+                self.val_loader = deepcopy(dataset.train_loader)
+            
+            data_concatenate = torch.cat if type(dataset.train_loader.dataset.data) == torch.Tensor else np.concatenate
+            need_aug = hasattr(dataset.train_loader.dataset, 'not_aug_transform')
+            if not need_aug:
+                refold_transform = lambda x: x.cpu()
+            else:    
+                data_shape = len(dataset.train_loader.dataset.data[0].shape)
+                if data_shape == 3:
+                    refold_transform = lambda x: (x.cpu()*255).permute([0, 2, 3, 1]).numpy().astype(np.uint8)
+                elif data_shape == 2:
+                    refold_transform = lambda x: (x.cpu()*255).squeeze(1).type(torch.uint8)
+
+            # REDUCE AND MERGE TRAINING SET
+            dataset.train_loader.dataset.targets = np.concatenate([
+                dataset.train_loader.dataset.targets[~val_train_mask],
+                self.buffer.labels.cpu().numpy()[:len(self.buffer)][~buff_val_mask]
                 ])
-            self.val_loader.dataset.data = data_concatenate([
-                self.val_loader.dataset.data[val_train_mask],
-                refold_transform((self.buffer.examples)[:len(self.buffer)][buff_val_mask])
+            dataset.train_loader.dataset.data = data_concatenate([
+                dataset.train_loader.dataset.data[~val_train_mask],
+                refold_transform((self.buffer.examples)[:len(self.buffer)][~buff_val_mask])
                 ])
+
+            if val_set_split > 0:
+                # REDUCE AND MERGE VALIDATION SET
+                self.val_loader.dataset.targets = np.concatenate([
+                    self.val_loader.dataset.targets[val_train_mask],
+                    self.buffer.labels.cpu().numpy()[:len(self.buffer)][buff_val_mask]
+                    ])
+                self.val_loader.dataset.data = data_concatenate([
+                    self.val_loader.dataset.data[val_train_mask],
+                    refold_transform((self.buffer.examples)[:len(self.buffer)][buff_val_mask])
+                    ])
 
 def reservoir(num_seen_examples: int, buffer_size: int) -> int:
     """

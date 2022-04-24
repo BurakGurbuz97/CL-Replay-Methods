@@ -55,11 +55,18 @@ def fill_buffer(self, mem_buffer: Buffer, dataset, t_idx: int) -> None:
         norm_trans = dataset.get_normalization_transform()
         if norm_trans is None:
             norm_trans = lambda x: x
-        classes_start, classes_end = t_idx * dataset.N_CLASSES_PER_TASK, (t_idx+1) * dataset.N_CLASSES_PER_TASK
+        try:
+            classes_start, classes_end = t_idx * dataset.N_CLASSES_PER_TASK, (t_idx+1) * dataset.N_CLASSES_PER_TASK
+        except:
+            #EF-MNIST dataset
+            classes_start, classes_end = sum(self.dataset.T[:t_idx]), sum(self.dataset.T[:t_idx+1])
 
         # 2.1 Extract all features
         a_x, a_y, a_f, a_l = [], [], [], []
         for x, y, not_norm_x in loader:
+            #if dataset is EF-MNIST not_norm_x is task IDS so fix this problem
+            if hasattr(dataset, "T"):
+                not_norm_x = deepcopy(x)
             mask = (y >= classes_start) & (y < classes_end)
             x, y, not_norm_x = x[mask], y[mask], not_norm_x[mask]
             if not x.size(0):
@@ -111,8 +118,12 @@ class ICarl(ContinualModel):
 
         # Instantiate buffers
         self.buffer = Buffer(self.args.buffer_size, self.device)
-        self.eye = torch.eye(self.dataset.N_CLASSES_PER_TASK *
-                             self.dataset.N_TASKS).to(self.device)
+        try:
+            self.eye = torch.eye(self.dataset.N_CLASSES_PER_TASK *
+                                self.dataset.N_TASKS).to(self.device)
+        except:
+            #EF-MNIST dataset
+            self.eye = torch.eye(57).to(self.device)
 
         self.class_means = None
         self.old_net = None
@@ -164,9 +175,14 @@ class ICarl(ContinualModel):
         :param task_idx: the task index
         :return: the differentiable loss value
         """
+        try:
+            pc = task_idx * self.dataset.N_CLASSES_PER_TASK
+            ac = (task_idx + 1) * self.dataset.N_CLASSES_PER_TASK
+        except:
+            #EF-MNIST dataset case
+            pc = sum(self.dataset.T[:task_idx])
+            ac = sum(self.dataset.T[:task_idx+1])
 
-        pc = task_idx * self.dataset.N_CLASSES_PER_TASK
-        ac = (task_idx + 1) * self.dataset.N_CLASSES_PER_TASK
 
         outputs = self.net(inputs)[:, :ac]
         if task_idx == 0:
