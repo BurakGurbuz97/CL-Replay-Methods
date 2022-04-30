@@ -38,16 +38,11 @@ def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> No
     :param dataset: the continual dataset
     :param k: the task index
     """
-    try:
+    if not hasattr(dataset, "T"):
         outputs[:, 0:k * dataset.N_CLASSES_PER_TASK] = -float('inf')
         outputs[:, (k + 1) * dataset.N_CLASSES_PER_TASK:
                dataset.N_TASKS * dataset.N_CLASSES_PER_TASK] = -float('inf')
-    except:
-        T =  dataset.T
-        task_classes = [list(range(sum(T[:i]),  sum(T[:i+1]))) for i in range(len(T))]
-        temp = copy.deepcopy(outputs)
-        outputs[:, :] = -float('inf')
-        outputs[:, task_classes[k]] = temp[:, task_classes[k]]
+
 
 
 
@@ -99,9 +94,19 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     :param args: the arguments of the current execution
     """
     model.net.to(model.device)
+    results, results_mask_classes = [], []
 
     if args.csv_log:
         csv_logger = CsvLogger(dataset.SETTING, dataset.NAME, model.NAME)
+
+
+    dataset_copy = get_dataset(args)
+    for t in range(dataset.N_TASKS):
+        model.net.train()
+        _, _ = dataset_copy.get_data_loaders()
+    if model.NAME != 'icarl' and model.NAME != 'pnn':
+        random_results_class, random_results_task = evaluate(model, dataset_copy)
+
 
     print(file=sys.stderr)
     for t in range(dataset.N_TASKS):
@@ -111,7 +116,11 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         if hasattr(model, 'begin_task'):
             model.begin_task(dataset)
 
-
+        if t:
+            accs = evaluate(model, dataset, last=True)
+            results[t-1] = results[t-1] + accs[0]
+            if dataset.SETTING == 'class-il':
+                results_mask_classes[t-1] = results_mask_classes[t-1] + accs[1]
 
         scheduler = dataset.get_scheduler(model, args)
         for epoch in range(model.args.n_epochs):
@@ -149,6 +158,8 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             model.end_task(dataset)
 
         accs = evaluate(model, dataset)
+        results.append(accs[0])
+        results_mask_classes.append(accs[1])
 
         mean_acc = np.mean(accs, axis=1)
         print_mean_accuracy(mean_acc, t + 1, dataset.SETTING)
@@ -156,6 +167,13 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         if args.csv_log:
             csv_logger.log(mean_acc)
 
+
+    if args.csv_log:
+        csv_logger.add_bwt(results, results_mask_classes)
+        csv_logger.add_forgetting(results, results_mask_classes)
+        if model.NAME != 'icarl' and model.NAME != 'pnn':
+            csv_logger.add_fwt(results, random_results_class,
+                               results_mask_classes, random_results_task)
 
     if args.csv_log:
         csv_logger.write(vars(args))

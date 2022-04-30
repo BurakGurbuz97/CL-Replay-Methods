@@ -26,7 +26,7 @@ def get_parser() -> ArgumentParser:
             del parser._actions[i]
             break
 
-    parser.add_argument('--gamma', type=float, default=None,
+    parser.add_argument('--gamma', type=float, default=1,
                         help='Margin parameter for GEM.')
     return parser
 
@@ -117,7 +117,10 @@ class Gem(ContinualModel):
         samples_per_task = self.args.buffer_size // dataset.N_TASKS
         
         loader = dataset.train_loader
-        cur_y, cur_x = next(iter(loader))[1:]
+        if hasattr(dataset, "T"):
+            cur_x, cur_y, _ = next(iter(loader))
+        else:
+            cur_y, cur_x = next(iter(loader))[1:]
         self.buffer.add_data(
             examples=cur_x.to(self.device),
             labels=cur_y.to(self.device),

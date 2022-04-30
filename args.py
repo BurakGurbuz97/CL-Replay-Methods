@@ -21,7 +21,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
                         help='Model name.', choices=get_all_models())
 
     
-    parser.add_argument('--optim', type=str, default="adam", choices= ["adam", "sgd"],
+    parser.add_argument('--optim', type=str, default="sgd", choices= ["adam", "sgd"],
                         help='Optimizer Type') 
 
     parser.add_argument('--lr', type=float, default=0.01,
@@ -34,7 +34,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     parser.add_argument('--optim_nesterov', type=int, default=0,
                         help='optimizer nesterov momentum.')    
 
-    parser.add_argument('--n_epochs', type=int, default=10,
+    parser.add_argument('--n_epochs', type=int, default=5,
                         help='Batch size.')
     parser.add_argument('--batch_size', type=int, default=128,
                         help='Batch size.')

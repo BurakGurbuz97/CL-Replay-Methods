@@ -55,9 +55,9 @@ def fill_buffer(self, mem_buffer: Buffer, dataset, t_idx: int) -> None:
         norm_trans = dataset.get_normalization_transform()
         if norm_trans is None:
             norm_trans = lambda x: x
-        try:
+        if not hasattr(dataset, "T"):
             classes_start, classes_end = t_idx * dataset.N_CLASSES_PER_TASK, (t_idx+1) * dataset.N_CLASSES_PER_TASK
-        except:
+        else:
             #EF-MNIST dataset
             classes_start, classes_end = sum(self.dataset.T[:t_idx]), sum(self.dataset.T[:t_idx+1])
 
@@ -118,10 +118,10 @@ class ICarl(ContinualModel):
 
         # Instantiate buffers
         self.buffer = Buffer(self.args.buffer_size, self.device)
-        try:
+        if not hasattr(self.dataset, "T"):
             self.eye = torch.eye(self.dataset.N_CLASSES_PER_TASK *
                                 self.dataset.N_TASKS).to(self.device)
-        except:
+        else:
             #EF-MNIST dataset
             self.eye = torch.eye(57).to(self.device)
 
